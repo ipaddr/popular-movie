@@ -1,5 +1,6 @@
 package id.ipaddr.popularmovie;
 
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -76,13 +77,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private void searchPopularity(){
         if (isConnected()){
-            SyncAdapter.syncImmediately(this, 0);
+            SyncAdapter.syncImmediately(this, Constant.USED_INT_PARAM_POPULAR, Constant.UNUSED_INT_PARAM);
         }
     }
 
     private void searchRating(){
         if (isConnected()){
-            SyncAdapter.syncImmediately(this, 1);
+            SyncAdapter.syncImmediately(this, Constant.USED_INT_PARAM_RATED, Constant.UNUSED_INT_PARAM);
         }
     }
 
@@ -182,26 +183,22 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         public void onBindViewHolder(ViewHolder holder, final int position) {
             if (mCursor.moveToPosition(position)) {
 
-                final String title = mCursor.getString(mCursor.getColumnIndexOrThrow(MovieContract.MovieEntry.COLUMN_NAME_ORIGINAL_TITLE));
-                final String releaseDate = mCursor.getString(mCursor.getColumnIndexOrThrow(MovieContract.MovieEntry.COLUMN_NAME_RELEASE_DATE));
+                final long id = mCursor.getLong(mCursor.getColumnIndex(MovieContract.MovieEntry._ID));
+                final int dataId = mCursor.getInt(mCursor.getColumnIndexOrThrow(MovieContract.MovieEntry.COLUMN_NAME_ID));
                 final String posterPath = mCursor.getString(mCursor.getColumnIndexOrThrow(MovieContract.MovieEntry.COLUMN_NAME_IMAGE_THUMBNAIL));
-                final String voteAverage = mCursor.getString(mCursor.getColumnIndexOrThrow(MovieContract.MovieEntry.COLUMN_NAME_VOTE_AVERAGE));
-                final String plotSynopsys = mCursor.getString(mCursor.getColumnIndexOrThrow(MovieContract.MovieEntry.COLUMN_NAME_PLOT_SYNOPSIS));
 
                 Picasso.with(MainActivity.this)
                         .load(Constant.MOVIE_DB_IMAGE_PATH + posterPath)
                         .placeholder(R.mipmap.ic_launcher)
                         .error(R.mipmap.ic_launcher)
                         .into(holder.imageView);
+
                 holder.imageView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        SyncAdapter.syncImmediately(mContext, Constant.USED_INT_PARAM_DETAIL, dataId);
                         Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-                        intent.putExtra(Constant.EXTRA_TITLE, title);
-                        intent.putExtra(Constant.EXTRA_RELEASE_DATE, releaseDate);
-                        intent.putExtra(Constant.EXTRA_POSTER, posterPath);
-                        intent.putExtra(Constant.EXTRA_VOTE_AVERAGE, voteAverage);
-                        intent.putExtra(Constant.EXTRA_PLOT_SYNOPSYS, plotSynopsys);
+                        intent.setData(MovieContract.MovieEntry.buildMovieWithTrailerAndReview(id, dataId));
                         startActivity(intent);
                     }
                 });

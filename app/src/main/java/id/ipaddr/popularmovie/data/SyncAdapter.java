@@ -13,7 +13,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
@@ -21,6 +20,10 @@ import id.ipaddr.popularmovie.Constant;
 import id.ipaddr.popularmovie.Movie;
 import id.ipaddr.popularmovie.Movies;
 import id.ipaddr.popularmovie.R;
+import id.ipaddr.popularmovie.Review;
+import id.ipaddr.popularmovie.ReviewResult;
+import id.ipaddr.popularmovie.Video;
+import id.ipaddr.popularmovie.VideoResult;
 import id.ipaddr.popularmovie.network.IMovieDBNetworkCall;
 import id.ipaddr.popularmovie.network.MovieDBNetworkCall;
 import retrofit2.Call;
@@ -86,10 +89,17 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         Log.d(TAG, "Starting sync");
         if (extras != null && extras.containsKey(Constant.KEY_ACTION)){
             int action = extras.getInt(Constant.KEY_ACTION);
-            if (action == 0)
+            if (action == Constant.USED_INT_PARAM_POPULAR)
                 handleActionGetPopularMovies();
-            else
+            else if (action == Constant.USED_INT_PARAM_RATED)
                 handleActionGetTopRatedMovies();
+            else if (action == Constant.USED_INT_PARAM_DETAIL){
+                if (extras.containsKey(Constant.KEY_ID)){
+                    int id = extras.getInt(Constant.KEY_ID);
+                    actionGetTrailer(id);
+                    actionGetReview(id);
+                }
+            }
         } else handleActionGetPopularMovies();
 
     }
@@ -98,11 +108,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
      * Helper method to have the sync adapter sync immediately
      * @param context The context used to access the account service
      */
-    public static void syncImmediately(Context context, int action) {
+    public static void syncImmediately(Context context, int action, int id) {
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-        bundle.putInt(Constant.KEY_ACTION, action);
+        if (action != Constant.UNUSED_INT_PARAM) bundle.putInt(Constant.KEY_ACTION, action);
+        if (id != Constant.UNUSED_INT_PARAM) bundle.putInt(Constant.KEY_ID, id);
         ContentResolver.requestSync(getSyncAccount(context),
                 context.getString(R.string.content_authority), bundle);
     }
@@ -161,7 +172,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         /*
          * Finally, let's do a sync to get things started
          */
-        syncImmediately(context, -1);
+        syncImmediately(context, Constant.UNUSED_INT_PARAM, Constant.UNUSED_INT_PARAM);
     }
 
     public static void initializeSyncAdapter(Context context) {
@@ -198,7 +209,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         try {
             Movies movies = callPopularMovies.execute().body();
             Log.d(TAG, "ok");
-            olala(movies);
+            processMovie(movies);
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -215,17 +226,19 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         try {
             Movies movies = callTopRatedMovies.execute().body();
             Log.d(TAG, "ok");
-            olala(movies);
+            processMovie(movies);
         } catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    private void olala(Movies movies){
+    private void processMovie(Movies movies){
         List<Movie> movieDatas = movies.getMovies();
         Vector<ContentValues> vContentValues = new Vector<>(movieDatas.size());
+
         for (Movie movie : movieDatas){
             ContentValues values = new ContentValues();
+            values.put(MovieContract.MovieEntry.COLUMN_NAME_ID, movie.getId());
             values.put(MovieContract.MovieEntry.COLUMN_NAME_ORIGINAL_TITLE, movie.getOriginalTitle());
             values.put(MovieContract.MovieEntry.COLUMN_NAME_IMAGE_THUMBNAIL, movie.getPosterPath());
             values.put(MovieContract.MovieEntry.COLUMN_NAME_PLOT_SYNOPSIS, movie.getOverview());
@@ -240,6 +253,49 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         getContext().getContentResolver().delete(MovieContract.MovieEntry.CONTENT_URI_MOVIE, null, null);
         getContext().getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI_MOVIE, cvArray);
         getContext().getContentResolver().notifyChange(MovieContract.MovieEntry.CONTENT_URI_MOVIE, null);
+    }
+
+    private void actionGetTrailer(int id) {
+        // TODO: Handle action Baz
+        IMovieDBNetworkCall callMovieAPI = MovieDBNetworkCall.getCalledMoviesAPI();
+        Call<Video> data = callMovieAPI.getTrailers(id);
+        try {
+            Video video = data.execute().body();
+
+            List<VideoResult> videoResults = video.getVideoResults();
+            Vector<ContentValues> vContentValues = new Vector<>(videoResults.size());
+            for (VideoResult result : videoResults){
+                ContentValues values = new ContentValues();
+                values.put(MovieContract.MovieTrailerEntry.COLUMN_NAME_MOVIE_KEY, id);
+                values.put(MovieContract.MovieTrailerEntry.COLUMN_NAME_TRAILER_KEY, result.getKey());
+                getContext().getContentResolver().insert(MovieContract.MovieTrailerEntry.CONTENT_URI_MOVIE_TRAILER, values);
+            }
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private void actionGetReview(int id) {
+        // TODO: Handle action Baz
+        IMovieDBNetworkCall callMovieAPI = MovieDBNetworkCall.getCalledMoviesAPI();
+        Call<Review> data = callMovieAPI.getReviews(id);
+        try {
+            Review review = data.execute().body();
+
+            List<ReviewResult> reviewResults = review.getReviewResults();
+            Vector<ContentValues> vContentValues = new Vector<>(reviewResults.size());
+            for (ReviewResult result : reviewResults){
+                ContentValues values = new ContentValues();
+                values.put(MovieContract.MovieReviewEntry.COLUMN_NAME_MOVIE_KEY, id);
+                values.put(MovieContract.MovieReviewEntry.COLUMN_NAME_AUTHOR, result.getAuthor());
+                values.put(MovieContract.MovieReviewEntry.COLUMN_NAME_CONTENT, result.getContent());
+                getContext().getContentResolver().insert(MovieContract.MovieReviewEntry.CONTENT_URI_MOVIE_REVIEW, values);
+            }
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
 }

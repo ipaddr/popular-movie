@@ -41,5 +41,15 @@
             android:gravity="left"
             tools:text="@string/plot_synopsis" />
 
+        <ExpandableListView
+            android:id="@+id/movies"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <ExpandableListView
+            android:id="@+id/reviews"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
     </LinearLayout>
 </ScrollView>

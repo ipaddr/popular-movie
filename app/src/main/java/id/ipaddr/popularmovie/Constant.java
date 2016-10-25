@@ -6,7 +6,13 @@ package id.ipaddr.popularmovie;
 
 public class Constant {
 
+    public static final int UNUSED_INT_PARAM = -1;
+    public static final int USED_INT_PARAM_POPULAR = 0;
+    public static final int USED_INT_PARAM_RATED = 1;
+    public static final int USED_INT_PARAM_DETAIL = 2;
+
     public static final String KEY_ACTION = "id.ipaddr.popularmovie.KEY_ACTION";
+    public static final String KEY_ID = "id.ipaddr.popularmovie.KEY_ID";
 
     /**
      * API key for Movie DB access
