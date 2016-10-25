@@ -11,4 +11,10 @@
     <string name="release_date">Release date</string>
     <string name="vote_average">Vote average</string>
     <string name="plot_synopsis">Plot synopsis</string>
+
+    <!-- Sync -->
+    <string name="sync_account_name">SyncMovies</string>
+    <string name="content_authority">id.ipaddr.popularmovie.AUTHORITY</string>
+    <string name="sync_account_type">id.ipaddr.popularmovie</string>
+
 </resources>

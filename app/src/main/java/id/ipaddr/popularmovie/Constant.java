@@ -6,6 +6,17 @@ package id.ipaddr.popularmovie;
 
 public class Constant {
 
+    public static final String KEY_ACTION = "id.ipaddr.popularmovie.KEY_ACTION";
+
+    /**
+     * API key for Movie DB access
+     */
+    private final String API_KEY = "257daff2ea5e8a52ce59c391d4c07251";
+    /**
+     * Movie Db pre-string image path
+     */
+    public static final String MOVIE_DB_IMAGE_PATH = "http://image.tmdb.org/t/p/w185/";
+
     // Intent extras
     public static final String EXTRA_TITLE = "id.ipaddr.popularmovie.EXTRA_TITLE";
     public static final String EXTRA_RELEASE_DATE = "id.ipaddr.popularmovie.EXTRA_RELEASE_DATE";

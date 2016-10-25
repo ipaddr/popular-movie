@@ -46,7 +46,7 @@ public class DetailActivity extends AppCompatActivity {
                 releaseDate.setText(sReleaseDate);
                 sPoster = intent.getStringExtra(Constant.EXTRA_POSTER);
                 Picasso.with(DetailActivity.this)
-                        .load(MovieDBIntentService.MOVIE_DB_IMAGE_PATH + sPoster)
+                        .load(Constant.MOVIE_DB_IMAGE_PATH + sPoster)
                         .placeholder(R.mipmap.ic_launcher)
                         .into(poster);
                 sRating = intent.getDoubleExtra(Constant.EXTRA_VOTE_AVERAGE, 0.0);

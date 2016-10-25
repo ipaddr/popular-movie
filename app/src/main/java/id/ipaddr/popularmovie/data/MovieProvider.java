@@ -100,6 +100,8 @@ public class MovieProvider extends ContentProvider {
                     id = db.delete(MovieEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             case MATCHER_MOVIES:
+                id = db.delete(MovieEntry.TABLE_NAME, null, null);
+                break;
             default:throw new UnsupportedOperationException("Not yet implemented");
         }
         getContext().getContentResolver().notifyChange(uri, null);

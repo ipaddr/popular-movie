@@ -2,8 +2,12 @@ package id.ipaddr.popularmovie;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -28,14 +32,13 @@ import android.widget.Toast;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+import id.ipaddr.popularmovie.data.MovieContract;
+import id.ipaddr.popularmovie.data.SyncAdapter;
+
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>{
 
     private RecyclerView rv;
     private StaggeredGridLayoutManager staggeredGridLayoutManager;
@@ -53,27 +56,15 @@ public class MainActivity extends AppCompatActivity {
         staggeredGridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
         rv.setLayoutManager(staggeredGridLayoutManager);
 
-        movieAdapter = new MovieAdapter(new ArrayList<Movie>(0));
-        rv.setAdapter(movieAdapter);
-
-        searchPopularity();
+        if (isConnected()){
+            SyncAdapter.initializeSyncAdapter(this);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        EventBus.getDefault().register(this);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        EventBus.getDefault().unregister(this);
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void doThis(Movies movies) {
-        updateAdapter(movies.getMovies());
+        getSupportLoaderManager().initLoader(1, null, this);
     }
 
     @Override
@@ -85,17 +76,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void searchPopularity(){
         if (isConnected()){
-            progressBar.setVisibility(View.VISIBLE);
-            rv.setVisibility(View.INVISIBLE);
-            MovieDBIntentService.startActionGetPopularMovies(this);
+            SyncAdapter.syncImmediately(this, 0);
         }
     }
 
     private void searchRating(){
         if (isConnected()){
-            progressBar.setVisibility(View.VISIBLE);
-            rv.setVisibility(View.INVISIBLE);
-            MovieDBIntentService.startActionGetTopRatedMovies(this);
+            SyncAdapter.syncImmediately(this, 1);
         }
     }
 
@@ -123,11 +110,36 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updateAdapter(List<Movie> movies){
-        progressBar.setVisibility(View.GONE);
-        rv.setVisibility(View.VISIBLE);
-        movieAdapter = new MovieAdapter(movies);
-        rv.setAdapter(movieAdapter);
+    private void updateAdapter(Cursor cursor){
+        if (movieAdapter == null && cursor != null ){
+            movieAdapter = new MovieAdapter(this, cursor);
+            rv.setAdapter(movieAdapter);
+        } else if (movieAdapter != null && cursor != null){
+            movieAdapter.setCursor(cursor);
+            movieAdapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new CursorLoader(
+                this,
+                MovieContract.MovieEntry.CONTENT_URI_MOVIE,
+                MovieContract.MovieEntry.PROJECTION,
+                null,
+                null,
+                null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+       if (data != null)
+           updateAdapter(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        updateAdapter(null);
     }
 
     //region recycler view
@@ -145,56 +157,60 @@ public class MainActivity extends AppCompatActivity {
 
     private class MovieAdapter extends RecyclerView.Adapter<ViewHolder>{
 
-        private List<Movie> movies;
-        private final View.OnClickListener recyclerViewOnClick = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        private Context mContext;
+        private Cursor mCursor;
 
-            }
-        };
+        public MovieAdapter(Context context, Cursor cursor){
+            this.mContext = context;
+            this.mCursor = cursor;
+        }
 
-        public MovieAdapter(List<Movie> movies){
-            this.movies = new ArrayList<>();
-            this.movies.clear();
-            this.movies.addAll(movies);
+        public void setCursor(Cursor mCursor) {
+            this.mCursor = mCursor;
         }
 
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             // create a new view
-            View v = LayoutInflater.from(parent.getContext())
+            View v = LayoutInflater.from(mContext)
                     .inflate(R.layout.movie_item, parent, false);
             ViewHolder vh = new ViewHolder(v);
-//            int height = parent.getMeasuredHeight() / 8;
-//            v.setMinimumHeight(height);
             return vh;
         }
 
         @Override
-        public void onBindViewHolder(ViewHolder holder, int position) {
-            final Movie movie = movies.get(position);
-            Picasso.with(MainActivity.this)
-                    .load(MovieDBIntentService.MOVIE_DB_IMAGE_PATH + movie.getPosterPath())
-                    .placeholder(R.mipmap.ic_launcher)
-                    .error(R.mipmap.ic_launcher)
-                    .into(holder.imageView);
-            holder.imageView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-                    intent.putExtra(Constant.EXTRA_TITLE, movie.getTitle());
-                    intent.putExtra(Constant.EXTRA_RELEASE_DATE, movie.getReleaseDate());
-                    intent.putExtra(Constant.EXTRA_POSTER, movie.getPosterPath());
-                    intent.putExtra(Constant.EXTRA_VOTE_AVERAGE, movie.getVoteAverage());
-                    intent.putExtra(Constant.EXTRA_PLOT_SYNOPSYS, movie.getOverview());
-                    startActivity(intent);
-                }
-            });
+        public void onBindViewHolder(ViewHolder holder, final int position) {
+            if (mCursor.moveToPosition(position)) {
+
+                final String title = mCursor.getString(mCursor.getColumnIndexOrThrow(MovieContract.MovieEntry.COLUMN_NAME_ORIGINAL_TITLE));
+                final String releaseDate = mCursor.getString(mCursor.getColumnIndexOrThrow(MovieContract.MovieEntry.COLUMN_NAME_RELEASE_DATE));
+                final String posterPath = mCursor.getString(mCursor.getColumnIndexOrThrow(MovieContract.MovieEntry.COLUMN_NAME_IMAGE_THUMBNAIL));
+                final String voteAverage = mCursor.getString(mCursor.getColumnIndexOrThrow(MovieContract.MovieEntry.COLUMN_NAME_VOTE_AVERAGE));
+                final String plotSynopsys = mCursor.getString(mCursor.getColumnIndexOrThrow(MovieContract.MovieEntry.COLUMN_NAME_PLOT_SYNOPSIS));
+
+                Picasso.with(MainActivity.this)
+                        .load(Constant.MOVIE_DB_IMAGE_PATH + posterPath)
+                        .placeholder(R.mipmap.ic_launcher)
+                        .error(R.mipmap.ic_launcher)
+                        .into(holder.imageView);
+                holder.imageView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+                        intent.putExtra(Constant.EXTRA_TITLE, title);
+                        intent.putExtra(Constant.EXTRA_RELEASE_DATE, releaseDate);
+                        intent.putExtra(Constant.EXTRA_POSTER, posterPath);
+                        intent.putExtra(Constant.EXTRA_VOTE_AVERAGE, voteAverage);
+                        intent.putExtra(Constant.EXTRA_PLOT_SYNOPSYS, plotSynopsys);
+                        startActivity(intent);
+                    }
+                });
+            }
         }
 
         @Override
         public int getItemCount() {
-            return movies.size();
+            return mCursor.getCount();
         }
     }
     //endregion
