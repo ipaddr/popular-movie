@@ -38,6 +38,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView rv;
+    private StaggeredGridLayoutManager staggeredGridLayoutManager;
     private MovieAdapter movieAdapter;
     private ProgressBar progressBar;
 
@@ -49,9 +50,11 @@ public class MainActivity extends AppCompatActivity {
         progressBar = (ProgressBar)findViewById(R.id.progressBar);
 
         rv = (RecyclerView)findViewById(R.id.movies);
+        staggeredGridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        rv.setLayoutManager(staggeredGridLayoutManager);
+
         movieAdapter = new MovieAdapter(new ArrayList<Movie>(0));
         rv.setAdapter(movieAdapter);
-        rv.setLayoutManager(new StaggeredGridLayoutManager(3, StaggeredGridLayoutManager.VERTICAL));
 
         searchPopularity();
     }
@@ -125,7 +128,6 @@ public class MainActivity extends AppCompatActivity {
         rv.setVisibility(View.VISIBLE);
         movieAdapter = new MovieAdapter(movies);
         rv.setAdapter(movieAdapter);
-        rv.setLayoutManager(new StaggeredGridLayoutManager(3,StaggeredGridLayoutManager.VERTICAL));
     }
 
     //region recycler view
@@ -163,8 +165,8 @@ public class MainActivity extends AppCompatActivity {
             View v = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.movie_item, parent, false);
             ViewHolder vh = new ViewHolder(v);
-            int height = parent.getMeasuredHeight() / 4;
-            v.setMinimumHeight(height);
+//            int height = parent.getMeasuredHeight() / 8;
+//            v.setMinimumHeight(height);
             return vh;
         }
 
@@ -174,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
             Picasso.with(MainActivity.this)
                     .load(MovieDBIntentService.MOVIE_DB_IMAGE_PATH + movie.getPosterPath())
                     .placeholder(R.mipmap.ic_launcher)
+                    .error(R.mipmap.ic_launcher)
                     .into(holder.imageView);
             holder.imageView.setOnClickListener(new View.OnClickListener() {
                 @Override
