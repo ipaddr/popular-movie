@@ -41,15 +41,17 @@
             android:gravity="left"
             tools:text="@string/plot_synopsis" />
 
-        <ExpandableListView
+        <ListView
             android:id="@+id/movies"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="200dp"
+            android:nestedScrollingEnabled="true"/>
 
-        <ExpandableListView
+        <ListView
             android:id="@+id/reviews"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="200dp"
+            android:nestedScrollingEnabled="true"/>
 
     </LinearLayout>
 </ScrollView>

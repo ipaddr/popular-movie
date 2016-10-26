@@ -9,6 +9,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.SyncRequest;
 import android.content.SyncResult;
+import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -259,16 +260,28 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         // TODO: Handle action Baz
         IMovieDBNetworkCall callMovieAPI = MovieDBNetworkCall.getCalledMoviesAPI();
         Call<Video> data = callMovieAPI.getTrailers(id);
+
         try {
             Video video = data.execute().body();
 
+            String [] projection = new String[]{MovieContract.MovieTrailerEntry.COLUMN_NAME_MOVIE_KEY
+                    , MovieContract.MovieTrailerEntry.COLUMN_NAME_TRAILER_KEY};
+            String selection = MovieContract.MovieTrailerEntry.COLUMN_NAME_MOVIE_KEY + " = ? AND "
+                    + MovieContract.MovieTrailerEntry.COLUMN_NAME_TRAILER_KEY + " = ?";
+            String selectionArg[];
+
             List<VideoResult> videoResults = video.getVideoResults();
-            Vector<ContentValues> vContentValues = new Vector<>(videoResults.size());
             for (VideoResult result : videoResults){
                 ContentValues values = new ContentValues();
                 values.put(MovieContract.MovieTrailerEntry.COLUMN_NAME_MOVIE_KEY, id);
                 values.put(MovieContract.MovieTrailerEntry.COLUMN_NAME_TRAILER_KEY, result.getKey());
-                getContext().getContentResolver().insert(MovieContract.MovieTrailerEntry.CONTENT_URI_MOVIE_TRAILER, values);
+
+                selectionArg = new String[]{String.valueOf(id), result.getKey()};
+                Cursor cursor = getContext().getContentResolver().query(MovieContract.MovieTrailerEntry.CONTENT_URI_MOVIE_TRAILER, projection, selection, selectionArg, null);
+                if (!cursor.moveToFirst()){
+                    getContext().getContentResolver().insert(MovieContract.MovieTrailerEntry.CONTENT_URI_MOVIE_TRAILER, values);
+                }
+                cursor.close();
             }
 
         } catch (Exception e){
@@ -280,17 +293,31 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         // TODO: Handle action Baz
         IMovieDBNetworkCall callMovieAPI = MovieDBNetworkCall.getCalledMoviesAPI();
         Call<Review> data = callMovieAPI.getReviews(id);
+
         try {
             Review review = data.execute().body();
 
+            String [] projection = new String[]{MovieContract.MovieReviewEntry.COLUMN_NAME_MOVIE_KEY
+                    , MovieContract.MovieReviewEntry.COLUMN_NAME_AUTHOR
+                    , MovieContract.MovieReviewEntry.COLUMN_NAME_CONTENT};
+            String selection = MovieContract.MovieReviewEntry.COLUMN_NAME_MOVIE_KEY + " = ? AND "
+                    + MovieContract.MovieReviewEntry.COLUMN_NAME_AUTHOR + " = ? AND "
+                    + MovieContract.MovieReviewEntry.COLUMN_NAME_CONTENT + " = ?";
+            String selectionArg[];
+
             List<ReviewResult> reviewResults = review.getReviewResults();
-            Vector<ContentValues> vContentValues = new Vector<>(reviewResults.size());
             for (ReviewResult result : reviewResults){
                 ContentValues values = new ContentValues();
                 values.put(MovieContract.MovieReviewEntry.COLUMN_NAME_MOVIE_KEY, id);
                 values.put(MovieContract.MovieReviewEntry.COLUMN_NAME_AUTHOR, result.getAuthor());
                 values.put(MovieContract.MovieReviewEntry.COLUMN_NAME_CONTENT, result.getContent());
-                getContext().getContentResolver().insert(MovieContract.MovieReviewEntry.CONTENT_URI_MOVIE_REVIEW, values);
+
+                selectionArg = new String[]{String.valueOf(id), result.getAuthor(), result.getContent()};
+                Cursor cursor = getContext().getContentResolver().query(MovieContract.MovieReviewEntry.CONTENT_URI_MOVIE_REVIEW, projection, selection, selectionArg, null);
+                if (!cursor.moveToFirst()) {
+                    getContext().getContentResolver().insert(MovieContract.MovieReviewEntry.CONTENT_URI_MOVIE_REVIEW, values);
+                }
+                cursor.close();
             }
 
         } catch (Exception e){

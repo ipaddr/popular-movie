@@ -176,7 +176,7 @@ public class MovieProvider extends ContentProvider {
                 cursor = db.query(MovieTrailerEntry.TABLE_NAME, MovieTrailerEntry.PROJECTION, arg, args, null, null, null);
                 break;
             case MATCHER_MOVIES_TRAILER:
-                cursor = db.query(MovieTrailerEntry.TABLE_NAME, MovieTrailerEntry.PROJECTION, null, null, null, null, null);
+                cursor = db.query(MovieTrailerEntry.TABLE_NAME, MovieTrailerEntry.PROJECTION, selection, selectionArgs, null, null, null);
                 break;
             case MATCHER_MOVIE_REVIEW_ID:
                 id = ContentUris.parseId(uri);
@@ -185,7 +185,7 @@ public class MovieProvider extends ContentProvider {
                 cursor = db.query(MovieReviewEntry.TABLE_NAME, MovieReviewEntry.PROJECTION, arg, args, null, null, null);
                 break;
             case MATCHER_MOVIES_REVIEW:
-                cursor = db.query(MovieReviewEntry.TABLE_NAME, MovieReviewEntry.PROJECTION, null, null, null, null, null);
+                cursor = db.query(MovieReviewEntry.TABLE_NAME, MovieReviewEntry.PROJECTION, selection, selectionArgs, null, null, null);
                 break;
             case MATCHER_MOVIE_TRAILER_REVIEW_ID:
                 cursor = getMovieWithTrailerAndReview(uri, projection, sortOrder);
