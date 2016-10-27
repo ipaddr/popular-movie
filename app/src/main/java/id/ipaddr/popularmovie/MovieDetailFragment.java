@@ -2,6 +2,8 @@ package id.ipaddr.popularmovie;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,8 +14,13 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.util.Pair;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -29,6 +36,7 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import id.ipaddr.popularmovie.data.MovieContract;
@@ -66,6 +74,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
             mUri = arguments.getParcelable(DETAIL_URI);
             getActivity().getSupportLoaderManager().restartLoader(MOVIE_DETAIL_LOADER, null, this);
         }
+        setHasOptionsMenu(true);
     }
 
     @Nullable
@@ -89,6 +98,31 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.detail_menu, menu);
+
+        MenuItem shareItem = menu.findItem(R.id.action_share);
+        final ShareActionProvider myShareActionProvider =
+                (ShareActionProvider) MenuItemCompat.getActionProvider(shareItem);
+        if (moviesKey.size() > 0){
+            for (String s: moviesKey){
+                Intent sharingIntent = new Intent(Intent.ACTION_SEND);
+                sharingIntent.setType("text/plain");
+                sharingIntent.putExtra(Intent.EXTRA_TEXT, "https://www.youtube.com/watch?v="+s);
+                PackageManager packageManager = getActivity().getPackageManager();
+                List<ResolveInfo> activities = packageManager.queryIntentActivities(sharingIntent, 0);
+                boolean isIntentSafe = activities.size() > 0;
+                if (isIntentSafe && myShareActionProvider != null) {
+                    myShareActionProvider.setShareIntent(sharingIntent);
+                }
+                break;
+            }
+        }
+
     }
 
     //region loader
