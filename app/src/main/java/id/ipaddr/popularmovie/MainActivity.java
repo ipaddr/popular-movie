@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private void searchFavorite(){
         currentState = true;
-        getSupportLoaderManager().initLoader(MOVIE_FAVORITE_LOADER, null, this);
+        getSupportLoaderManager().restartLoader(MOVIE_FAVORITE_LOADER, null, this);
     }
 
     @Override

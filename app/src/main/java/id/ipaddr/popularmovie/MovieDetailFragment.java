@@ -245,11 +245,18 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                     values.put(MovieContract.MovieFavoriteEntry.COLUMN_NAME_RELEASE_DATE, releaseDate);
                     values.put(MovieContract.MovieFavoriteEntry.COLUMN_NAME_VOTE_AVERAGE, voteAverage);
                     getContext().getContentResolver().insert(MovieContract.MovieFavoriteEntry.CONTENT_URI_MOVIE_FAVORITE, values);
+                    startFavoriteImg.setImageResource(android.R.drawable.btn_star_big_on);
                     isFavorite = true;
                 } else {
                     getContext().getContentResolver().delete(MovieContract.MovieFavoriteEntry.CONTENT_URI_MOVIE_FAVORITE, selection, selectionArg);
+                    startFavoriteImg.setImageResource(android.R.drawable.btn_star_big_off);
                     isFavorite = false;
                 }
+                getContext().getContentResolver().query(MovieContract.MovieFavoriteEntry.CONTENT_URI_MOVIE_FAVORITE,
+                        MovieContract.MovieFavoriteEntry.PROJECTION,
+                        null,
+                        null,
+                        null);
             }
         });
     }
