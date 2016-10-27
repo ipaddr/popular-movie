@@ -13,6 +13,7 @@ public class Constant {
 
     public static final String KEY_ACTION = "id.ipaddr.popularmovie.KEY_ACTION";
     public static final String KEY_ID = "id.ipaddr.popularmovie.KEY_ID";
+    public static final String KEY_URI = "id.ipaddr.popularmovie.KEY_URI";
 
     /**
      * API key for Movie DB access

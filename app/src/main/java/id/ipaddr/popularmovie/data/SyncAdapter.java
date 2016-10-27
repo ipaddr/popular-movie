@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.SyncRequest;
 import android.content.SyncResult;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -95,10 +96,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             else if (action == Constant.USED_INT_PARAM_RATED)
                 handleActionGetTopRatedMovies();
             else if (action == Constant.USED_INT_PARAM_DETAIL){
-                if (extras.containsKey(Constant.KEY_ID)){
+                if (extras.containsKey(Constant.KEY_ID) && extras.containsKey(Constant.KEY_URI)){
                     int id = extras.getInt(Constant.KEY_ID);
-                    actionGetTrailer(id);
-                    actionGetReview(id);
+                    String sUri = extras.getString(Constant.KEY_URI);
+                    Uri uri = Uri.parse(sUri);
+                    actionGetTrailer(id, uri);
+                    actionGetReview(id, uri);
                 }
             }
         } else handleActionGetPopularMovies();
@@ -109,12 +112,13 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
      * Helper method to have the sync adapter sync immediately
      * @param context The context used to access the account service
      */
-    public static void syncImmediately(Context context, int action, int id) {
+    public static void syncImmediately(Context context, int action, int id, Uri uri) {
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
         if (action != Constant.UNUSED_INT_PARAM) bundle.putInt(Constant.KEY_ACTION, action);
         if (id != Constant.UNUSED_INT_PARAM) bundle.putInt(Constant.KEY_ID, id);
+        if (uri != null) bundle.putString(Constant.KEY_URI, uri.toString());
         ContentResolver.requestSync(getSyncAccount(context),
                 context.getString(R.string.content_authority), bundle);
     }
@@ -173,7 +177,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         /*
          * Finally, let's do a sync to get things started
          */
-        syncImmediately(context, Constant.UNUSED_INT_PARAM, Constant.UNUSED_INT_PARAM);
+        syncImmediately(context, Constant.UNUSED_INT_PARAM, Constant.UNUSED_INT_PARAM, null);
     }
 
     public static void initializeSyncAdapter(Context context) {
@@ -256,7 +260,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         getContext().getContentResolver().notifyChange(MovieContract.MovieEntry.CONTENT_URI_MOVIE, null);
     }
 
-    private void actionGetTrailer(int id) {
+    private void actionGetTrailer(int id, Uri uri) {
         // TODO: Handle action Baz
         IMovieDBNetworkCall callMovieAPI = MovieDBNetworkCall.getCalledMoviesAPI();
         Call<Video> data = callMovieAPI.getTrailers(id);
@@ -283,13 +287,13 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 }
                 cursor.close();
             }
-
+            getContext().getContentResolver().notifyChange(uri, null);
         } catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    private void actionGetReview(int id) {
+    private void actionGetReview(int id, Uri uri) {
         // TODO: Handle action Baz
         IMovieDBNetworkCall callMovieAPI = MovieDBNetworkCall.getCalledMoviesAPI();
         Call<Review> data = callMovieAPI.getReviews(id);
@@ -319,7 +323,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 }
                 cursor.close();
             }
-
+            getContext().getContentResolver().notifyChange(uri, null);
         } catch (Exception e){
             e.printStackTrace();
         }

@@ -5,12 +5,14 @@
     <string name="options">Options</string>
     <string name="popularity">Popularity</string>
     <string name="rating">Rating</string>
+    <string name="favorite">Favorite</string>
     
     <!-- Activity Detail String -->
     <string name="title">Title</string>
     <string name="release_date">Release date</string>
     <string name="vote_average">Vote average</string>
     <string name="plot_synopsis">Plot synopsis</string>
+    <string name="mark_as_favorite">Mark as favorite</string>
 
     <!-- Sync -->
     <string name="sync_account_name">SyncMovies</string>

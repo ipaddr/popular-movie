@@ -9,6 +9,7 @@ import id.ipaddr.popularmovie.Movie;
 import id.ipaddr.popularmovie.data.MovieContract.MovieEntry;
 import id.ipaddr.popularmovie.data.MovieContract.MovieTrailerEntry;
 import id.ipaddr.popularmovie.data.MovieContract.MovieReviewEntry;
+import id.ipaddr.popularmovie.data.MovieContract.MovieFavoriteEntry;
 
 
 /**
@@ -62,6 +63,19 @@ public class MovieDbHelper extends SQLiteOpenHelper {
     private static final String SQL_DELETE_ENTRIES_REVIEWS =
             "DROP TABLE IF EXISTS " + MovieReviewEntry.TABLE_NAME;
 
+    private static final String SQL_CREATE_ENTRIES_FAVORITE =
+            "CREATE TABLE " + MovieFavoriteEntry.TABLE_NAME + " (" +
+                    MovieFavoriteEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    MovieFavoriteEntry.COLUMN_NAME_ID + INTEGER_TYPE + COMMA_SEP +
+                    MovieFavoriteEntry.COLUMN_NAME_ORIGINAL_TITLE + TEXT_TYPE + COMMA_SEP +
+                    MovieFavoriteEntry.COLUMN_NAME_IMAGE_THUMBNAIL + TEXT_TYPE + COMMA_SEP +
+                    MovieFavoriteEntry.COLUMN_NAME_PLOT_SYNOPSIS + TEXT_TYPE + COMMA_SEP +
+                    MovieFavoriteEntry.COLUMN_NAME_VOTE_AVERAGE + TEXT_TYPE + COMMA_SEP +
+                    MovieFavoriteEntry.COLUMN_NAME_RELEASE_DATE + TEXT_TYPE + " );";
+
+    private static final String SQL_DELETE_ENTRIES_FAVORITE =
+            "DROP TABLE IF EXISTS " + MovieEntry.TABLE_NAME;
+
     public MovieDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -69,6 +83,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
         db.execSQL(SQL_CREATE_ENTRIES);
         db.execSQL(SQL_CREATE_ENTRIES_VIDEOS);
         db.execSQL(SQL_CREATE_ENTRIES_REVIEWS);
+        db.execSQL(SQL_CREATE_ENTRIES_FAVORITE);
     }
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // This database is only a cache for online data, so its upgrade policy is
@@ -76,6 +91,7 @@ public class MovieDbHelper extends SQLiteOpenHelper {
         db.execSQL(SQL_DELETE_ENTRIES);
         db.execSQL(SQL_DELETE_ENTRIES_VIDEOS);
         db.execSQL(SQL_DELETE_ENTRIES_REVIEWS);
+        db.execSQL(SQL_DELETE_ENTRIES_FAVORITE);
         onCreate(db);
     }
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {

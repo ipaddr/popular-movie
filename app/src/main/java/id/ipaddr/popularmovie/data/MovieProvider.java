@@ -12,6 +12,7 @@ import android.net.Uri;
 import id.ipaddr.popularmovie.data.MovieContract.MovieEntry;
 import id.ipaddr.popularmovie.data.MovieContract.MovieTrailerEntry;
 import id.ipaddr.popularmovie.data.MovieContract.MovieReviewEntry;
+import id.ipaddr.popularmovie.data.MovieContract.MovieFavoriteEntry;
 
 
 public class MovieProvider extends ContentProvider {
@@ -26,6 +27,23 @@ public class MovieProvider extends ContentProvider {
     public static final int MATCHER_MOVIES_REVIEW = 105;
     public static final int MATCHER_MOVIE_REVIEW_ID = 106;
     public static final int MATCHER_MOVIE_TRAILER_REVIEW_ID = 107;
+    public static final int MATCHER_MOVIES_FAVORITE = 108;
+    public static final int MATCHER_MOVIE_FAVORITE_ID = 109;
+    public static final int MATCHER_MOVIE_FAVORITE_TRAILER_REVIEW_ID = 110;
+
+    private static final String MOVIE_JOIN_TRAILER_REVIEW = MovieEntry.TABLE_NAME + " LEFT JOIN " +
+            MovieTrailerEntry.TABLE_NAME +
+            " ON " + MovieEntry.TABLE_NAME +
+            "." + MovieEntry.COLUMN_NAME_ID +
+            " = " + MovieTrailerEntry.TABLE_NAME +
+            "." + MovieTrailerEntry.COLUMN_NAME_MOVIE_KEY
+            + "  " +
+            " LEFT JOIN " +
+            MovieReviewEntry.TABLE_NAME +
+            " ON " + MovieEntry.TABLE_NAME +
+            "." + MovieEntry.COLUMN_NAME_ID +
+            " = " + MovieReviewEntry.TABLE_NAME +
+            "." + MovieReviewEntry.COLUMN_NAME_MOVIE_KEY;
 
     private static final SQLiteQueryBuilder sMoviesTrailerReviewQueryBuilder;
     static{
@@ -33,21 +51,7 @@ public class MovieProvider extends ContentProvider {
 
         //This is an inner join which looks like
         //weather INNER JOIN location ON weather.location_id = location._id
-        sMoviesTrailerReviewQueryBuilder.setTables(
-                MovieEntry.TABLE_NAME + " LEFT JOIN " +
-                        MovieTrailerEntry.TABLE_NAME +
-                        " ON " + MovieEntry.TABLE_NAME +
-                        "." + MovieEntry.COLUMN_NAME_ID +
-                        " = " + MovieTrailerEntry.TABLE_NAME +
-                        "." + MovieTrailerEntry.COLUMN_NAME_MOVIE_KEY
-                + "  " +
-                " LEFT JOIN " +
-                MovieReviewEntry.TABLE_NAME +
-                " ON " + MovieEntry.TABLE_NAME +
-                "." + MovieEntry.COLUMN_NAME_ID +
-                " = " + MovieReviewEntry.TABLE_NAME +
-                "." + MovieReviewEntry.COLUMN_NAME_MOVIE_KEY
-        );
+        sMoviesTrailerReviewQueryBuilder.setTables(MOVIE_JOIN_TRAILER_REVIEW);
     }
 
     //location.location_setting = ? AND date = ?
@@ -71,6 +75,50 @@ public class MovieProvider extends ContentProvider {
         );
     }
 
+    private static final String MOVIE_FAVORITE_JOIN_TRAILER_REVIEW = MovieFavoriteEntry.TABLE_NAME + " LEFT JOIN " +
+            MovieTrailerEntry.TABLE_NAME +
+            " ON " + MovieFavoriteEntry.TABLE_NAME +
+            "." + MovieFavoriteEntry.COLUMN_NAME_ID +
+            " = " + MovieTrailerEntry.TABLE_NAME +
+            "." + MovieTrailerEntry.COLUMN_NAME_MOVIE_KEY
+            + "  " +
+            " LEFT JOIN " +
+            MovieReviewEntry.TABLE_NAME +
+            " ON " + MovieFavoriteEntry.TABLE_NAME +
+            "." + MovieFavoriteEntry.COLUMN_NAME_ID +
+            " = " + MovieReviewEntry.TABLE_NAME +
+            "." + MovieReviewEntry.COLUMN_NAME_MOVIE_KEY;
+
+    private static final SQLiteQueryBuilder sMoviesFavoriteTrailerReviewQueryBuilder;
+    static{
+        sMoviesFavoriteTrailerReviewQueryBuilder = new SQLiteQueryBuilder();
+
+        //This is an inner join which looks like
+        //weather INNER JOIN location ON weather.location_id = location._id
+        sMoviesFavoriteTrailerReviewQueryBuilder.setTables(MOVIE_FAVORITE_JOIN_TRAILER_REVIEW);
+    }
+
+    //location.location_setting = ? AND date = ?
+    private static final String sMoviesFavoriteTrailerReviewQueryBuilderSelection =
+            MovieFavoriteEntry.TABLE_NAME +
+                    "." + MovieFavoriteEntry.COLUMN_NAME_ID + " = ? " ;
+
+    private Cursor getMovieFavoriteWithTrailerAndReview(
+            Uri uri, String[] projection, String sortOrder) {
+
+        String movieId = uri.getPathSegments().get(2);
+        String[] selectionArg = new String[]{movieId};
+
+        return sMoviesFavoriteTrailerReviewQueryBuilder.query(mDbHelper.getReadableDatabase(),
+                projection,
+                sMoviesFavoriteTrailerReviewQueryBuilderSelection,
+                selectionArg,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
     /**
      * add instance of uri matcher so it will have content to match to
      */
@@ -78,11 +126,14 @@ public class MovieProvider extends ContentProvider {
     static {
         URI_MATCHER.addURI(MovieContract.CONTENT_AUTHORITY, MovieEntry.PATH_MOVIE, MATCHER_MOVIES);
         URI_MATCHER.addURI(MovieContract.CONTENT_AUTHORITY, MovieEntry.PATH_MOVIE + "/#", MATCHER_MOVIE_ID);
+        URI_MATCHER.addURI(MovieContract.CONTENT_AUTHORITY, MovieEntry.PATH_MOVIE + "/#/*", MATCHER_MOVIE_TRAILER_REVIEW_ID);
         URI_MATCHER.addURI(MovieContract.CONTENT_AUTHORITY, MovieTrailerEntry.PATH_MOVIE_TRAILER, MATCHER_MOVIES_TRAILER);
         URI_MATCHER.addURI(MovieContract.CONTENT_AUTHORITY, MovieTrailerEntry.PATH_MOVIE_TRAILER + "/#", MATCHER_MOVIE_TRAILER_ID);
         URI_MATCHER.addURI(MovieContract.CONTENT_AUTHORITY, MovieReviewEntry.PATH_MOVIE_REVIEW, MATCHER_MOVIES_REVIEW);
         URI_MATCHER.addURI(MovieContract.CONTENT_AUTHORITY, MovieReviewEntry.PATH_MOVIE_REVIEW + "/#", MATCHER_MOVIE_REVIEW_ID);
-        URI_MATCHER.addURI(MovieContract.CONTENT_AUTHORITY, MovieEntry.PATH_MOVIE + "/#/*", MATCHER_MOVIE_TRAILER_REVIEW_ID);
+        URI_MATCHER.addURI(MovieContract.CONTENT_AUTHORITY, MovieFavoriteEntry.PATH_MOVIE_FAVORITE, MATCHER_MOVIES_FAVORITE);
+        URI_MATCHER.addURI(MovieContract.CONTENT_AUTHORITY, MovieFavoriteEntry.PATH_MOVIE_FAVORITE + "/#", MATCHER_MOVIE_FAVORITE_ID);
+        URI_MATCHER.addURI(MovieContract.CONTENT_AUTHORITY, MovieFavoriteEntry.PATH_MOVIE_FAVORITE + "/#/*", MATCHER_MOVIE_FAVORITE_TRAILER_REVIEW_ID);
     }
 
     private MovieDbHelper mDbHelper;
@@ -116,6 +167,12 @@ public class MovieProvider extends ContentProvider {
                 return MovieReviewEntry.CONTENT_TYPE_MOVIE;
             case MATCHER_MOVIE_TRAILER_REVIEW_ID:
                 return MovieEntry.CONTENT_ITEM_MOVIE;
+            case MATCHER_MOVIE_FAVORITE_ID:
+                return MovieFavoriteEntry.CONTENT_ITEM_MOVIE;
+            case MATCHER_MOVIES_FAVORITE:
+                return MovieFavoriteEntry.CONTENT_TYPE_MOVIE;
+            case MATCHER_MOVIE_FAVORITE_TRAILER_REVIEW_ID:
+                return MovieFavoriteEntry.CONTENT_ITEM_MOVIE;
             default: throw new UnsupportedOperationException("Not yet implemented");
         }
     }
@@ -142,6 +199,11 @@ public class MovieProvider extends ContentProvider {
             case MATCHER_MOVIES_REVIEW:
                 id = db.insert(MovieReviewEntry.TABLE_NAME, null, values);
                 resultUri = MovieReviewEntry.buildProdictUri(id);
+                break;
+            case MATCHER_MOVIE_FAVORITE_ID:
+            case MATCHER_MOVIES_FAVORITE:
+                id = db.insert(MovieFavoriteEntry.TABLE_NAME, null, values);
+                resultUri = MovieFavoriteEntry.buildProdictUri(id);
                 break;
             default:throw new UnsupportedOperationException("Not yet implemented");
         }
@@ -190,6 +252,18 @@ public class MovieProvider extends ContentProvider {
             case MATCHER_MOVIE_TRAILER_REVIEW_ID:
                 cursor = getMovieWithTrailerAndReview(uri, projection, sortOrder);
                 break;
+            case MATCHER_MOVIE_FAVORITE_ID:
+                id = ContentUris.parseId(uri);
+                arg = MovieFavoriteEntry._ID + "=?";
+                args = new String[]{String.valueOf(id)};
+                cursor = db.query(MovieFavoriteEntry.TABLE_NAME, MovieFavoriteEntry.PROJECTION, arg, args, null, null, null);
+                break;
+            case MATCHER_MOVIES_FAVORITE:
+                cursor = db.query(MovieFavoriteEntry.TABLE_NAME, MovieFavoriteEntry.PROJECTION, selection, selectionArgs, null, null, null);
+                break;
+            case MATCHER_MOVIE_FAVORITE_TRAILER_REVIEW_ID:
+                cursor = getMovieFavoriteWithTrailerAndReview(uri, projection, sortOrder);
+                break;
             default:throw new UnsupportedOperationException("Not yet implemented");
         }
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
@@ -228,6 +302,14 @@ public class MovieProvider extends ContentProvider {
             case MATCHER_MOVIES_REVIEW:
                 id = db.delete(MovieReviewEntry.TABLE_NAME, null, null);
                 break;
+            case MATCHER_MOVIE_FAVORITE_ID:
+                arg = MovieFavoriteEntry._ID + "=?";
+                args = new String [] {String.valueOf(ContentUris.parseId(uri))};
+                id = db.delete(MovieFavoriteEntry.TABLE_NAME, arg, args);
+                break;
+            case MATCHER_MOVIES_FAVORITE:
+                id = db.delete(MovieFavoriteEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:throw new UnsupportedOperationException("Not yet implemented");
         }
         getContext().getContentResolver().notifyChange(uri, null);
@@ -258,9 +340,15 @@ public class MovieProvider extends ContentProvider {
                 args = new String [] {String.valueOf(ContentUris.parseId(uri))};
                 id = db.update(MovieReviewEntry.TABLE_NAME, values, arg, args);
                 break;
+            case MATCHER_MOVIE_FAVORITE_ID:
+                arg = MovieFavoriteEntry._ID + "=?";
+                args = new String [] {String.valueOf(ContentUris.parseId(uri))};
+                id = db.update(MovieFavoriteEntry.TABLE_NAME, values, arg, args);
+                break;
             case MATCHER_MOVIES:
             case MATCHER_MOVIES_TRAILER:
             case MATCHER_MOVIES_REVIEW:
+            case MATCHER_MOVIES_FAVORITE:
             default:throw new UnsupportedOperationException("Not yet implemented");
         }
         getContext().getContentResolver().notifyChange(uri, null);

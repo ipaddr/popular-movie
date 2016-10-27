@@ -127,5 +127,45 @@ public final class MovieContract {
                 = {_ID, COLUMN_NAME_MOVIE_KEY, COLUMN_NAME_AUTHOR, COLUMN_NAME_CONTENT};
 
     }
+
+    /* Inner class that defines the table movie favorite contents */
+    public static class MovieFavoriteEntry implements BaseColumns {
+
+        /**
+         * Path to movie table
+         */
+        public static final String PATH_MOVIE_FAVORITE = "path_movie_favorite";
+
+        /**
+         * Content uri for movie path
+         */
+        public static final Uri CONTENT_URI_MOVIE_FAVORITE = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_MOVIE_FAVORITE);
+
+        /**
+         * Content type for list or item of uri
+         */
+        public static final String CONTENT_TYPE_MOVIE
+                = "vnd.android.cursor.dir" + CONTENT_URI_MOVIE_FAVORITE + "/" + PATH_MOVIE_FAVORITE;
+        public static final String CONTENT_ITEM_MOVIE
+                = "vnd.android.cursor.item" + CONTENT_URI_MOVIE_FAVORITE + "/" + PATH_MOVIE_FAVORITE;
+
+        public static final Uri buildProdictUri(long id){return ContentUris.withAppendedId(CONTENT_URI_MOVIE_FAVORITE, id);}
+
+        public static final String TABLE_NAME = "moviesfavoriteentry";
+        public static final String COLUMN_NAME_ID = "movieid";
+        public static final String COLUMN_NAME_ORIGINAL_TITLE = "originaltitle";
+        public static final String COLUMN_NAME_IMAGE_THUMBNAIL = "imagethumbnail";
+        public static final String COLUMN_NAME_VOTE_AVERAGE = "voteaverage";
+        public static final String COLUMN_NAME_PLOT_SYNOPSIS = "plotsynopsis";
+        public static final String COLUMN_NAME_RELEASE_DATE = "releasedate";
+
+        public static final String [] PROJECTION
+                = {_ID, COLUMN_NAME_ID, COLUMN_NAME_ORIGINAL_TITLE, COLUMN_NAME_IMAGE_THUMBNAIL
+                , COLUMN_NAME_VOTE_AVERAGE, COLUMN_NAME_PLOT_SYNOPSIS, COLUMN_NAME_RELEASE_DATE};
+
+        public static Uri buildMovieWithTrailerAndReview(long id, int paramId){
+            return buildProdictUri(id).buildUpon().appendPath(String.valueOf(paramId)).build();
+        }
+    }
 }
 
