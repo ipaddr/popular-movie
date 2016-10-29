@@ -27,6 +27,8 @@ import android.widget.ProgressBar;
 
 import com.squareup.picasso.Picasso;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import id.ipaddr.popularmovie.data.MovieContract;
 import id.ipaddr.popularmovie.data.SyncAdapter;
 
@@ -35,10 +37,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private static final String DETAILFRAGMENT_TAG = "DFTAG";
     private boolean mTwoPane;
 
-    private RecyclerView recyclerView;
+    @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.fab) FloatingActionButton fab;
+
+    @BindView(R.id.item_list) RecyclerView recyclerView;
     private StaggeredGridLayoutManager staggeredGridLayoutManager;
     private MovieAdapter movieAdapter;
-    private ProgressBar progressBar;
 
     public static final String IS_TWO_PANE = "IS_TWO_PANE";
     private boolean isTwoPane = false;
@@ -55,14 +59,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -71,7 +73,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
         });
 
-        recyclerView = (RecyclerView)findViewById(R.id.item_list);
         staggeredGridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(staggeredGridLayoutManager);
         setupRecyclerView();
@@ -96,12 +97,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         if (!currentState)
             getSupportLoaderManager().initLoader(MOVIE_LOADER, null, this);
         else getSupportLoaderManager().initLoader(MOVIE_FAVORITE_LOADER, null, this);
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
-        super.onSaveInstanceState(outState, outPersistentState);
-        outState.putBoolean(CURRENT_STATE, currentState);
     }
 
     private void setupRecyclerView() {
@@ -159,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             outState.putInt(SELECTED_KEY, mPosition);
         }
         outState.putBoolean(IS_TWO_PANE, isTwoPane);
+        outState.putBoolean(CURRENT_STATE, currentState);
         super.onSaveInstanceState(outState);
     }
 

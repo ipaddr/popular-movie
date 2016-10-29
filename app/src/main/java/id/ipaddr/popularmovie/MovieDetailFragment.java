@@ -15,7 +15,10 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.ShareActionProvider;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -59,10 +62,10 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     private ImageView startFavoriteImg;
     private RatingBar rating;
     private ImageView poster;
-    private ListView movies, reviews;
+    private RecyclerView movies, reviews;
 
-    private Set<String> moviesKey = new HashSet<>();
-    private Set<Pair<String, String>> reviewsAuthorAndContent = new HashSet<>();
+    private List<String> moviesKey = new ArrayList<>();
+    private List<Pair<String, String>> reviewsAuthorAndContent = new ArrayList<>();
 
     public MovieDetailFragment(){}
 
@@ -89,8 +92,14 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
         rating = (RatingBar)rootView.findViewById(R.id.rating);
         plotSynopsis = (TextView)rootView.findViewById(R.id.synopsis);
 
-        movies = (ListView)rootView.findViewById(R.id.movies);
-        reviews = (ListView)rootView.findViewById(R.id.reviews);
+        movies = (RecyclerView)rootView.findViewById(R.id.movies);
+        reviews = (RecyclerView)rootView.findViewById(R.id.reviews);
+
+        RecyclerView.LayoutManager layoutManagerMovies = new LinearLayoutManager(getActivity());
+        RecyclerView.LayoutManager layoutManagerReviews = new LinearLayoutManager(getActivity());
+
+        movies.setLayoutManager(layoutManagerMovies);
+        reviews.setLayoutManager(layoutManagerReviews);
 
         return rootView;
     }
@@ -144,52 +153,58 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                 processReview(mCursor);
             }
 
-            movies.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, new ArrayList<String>(moviesKey)){
-                @NonNull
+
+            movies.setAdapter(new RecyclerView.Adapter<ViewHolder.ViewHolderTrailer>(){
+
                 @Override
-                public View getView(int position, View convertView, ViewGroup parent) {
-                    ViewHolder.ViewHolderTrailer vht;
-                    if (convertView == null){
-                        convertView = LayoutInflater.from(getActivity()).inflate(R.layout.trailer_item, null);
-                        vht = new ViewHolder.ViewHolderTrailer(convertView);
-                        convertView.setTag(vht);
-                    } else {
-                        vht = (ViewHolder.ViewHolderTrailer) convertView.getTag();
-                    }
+                public ViewHolder.ViewHolderTrailer onCreateViewHolder(ViewGroup parent, int viewType) {
+                    View view = LayoutInflater.from(getActivity()).inflate(android.R.layout.simple_list_item_1, null);
+                    ViewHolder.ViewHolderTrailer vht = new ViewHolder.ViewHolderTrailer(view);
+                    return vht;
+                }
 
-                    vht.tv.setText(getItem(position));
+                @Override
+                public void onBindViewHolder(ViewHolder.ViewHolderTrailer holder, int position) {
+                    final String youtubeId = moviesKey.get(position);
+                    holder.tv.setText(youtubeId);
+                    holder.tv.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            // Create the text message with a string
+                            Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v="+youtubeId));
+                            // Verify that the intent will resolve to an activity
+                            if (sendIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+                                startActivity(sendIntent);
+                            }
+                        }
+                    });
+                }
 
-                    return convertView;
+                @Override
+                public int getItemCount() {
+                    return moviesKey.size();
                 }
             });
-            movies.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            reviews.setAdapter(new RecyclerView.Adapter<ViewHolder.ViewHolderReview>(){
+
                 @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    ViewHolder.ViewHolderTrailer vht = (ViewHolder.ViewHolderTrailer) view.getTag();
-                    String movieId = vht.tv.getText().toString();
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v="+movieId)));
+                public ViewHolder.ViewHolderReview onCreateViewHolder(ViewGroup parent, int viewType) {
+                    View view = LayoutInflater.from(getActivity()).inflate(android.R.layout.simple_list_item_2, null);
+                    ViewHolder.ViewHolderReview vhr = new ViewHolder.ViewHolderReview(view);
+                    return vhr;
                 }
-            });
 
-            reviews.setAdapter(new ArrayAdapter<Pair<String, String>>(getActivity(), android.R.layout.simple_list_item_2, new ArrayList<Pair<String, String>>(reviewsAuthorAndContent)){
-                @NonNull
                 @Override
-                public View getView(int position, View convertView, ViewGroup parent) {
-                    ViewHolder.ViewHolderReview vhr;
-                    if (convertView == null){
-                        convertView = LayoutInflater.from(getActivity()).inflate(android.R.layout.simple_list_item_2, parent, false);
-                        vhr = new ViewHolder.ViewHolderReview(convertView);
-                        convertView.setTag(vhr);
-                    } else {
-                        vhr = (ViewHolder.ViewHolderReview) convertView.getTag();
-                    }
+                public void onBindViewHolder(ViewHolder.ViewHolderReview holder, int position) {
+                    final Pair<String, String> data = reviewsAuthorAndContent.get(position);
+                    holder.tv1.setText(data.first);
+                    holder.tv2.setText(data.second);
+                }
 
-                    Pair<String, String> data = getItem(position);
-
-                    vhr.tv1.setText(data.first);
-                    vhr.tv2.setText(data.second);
-
-                    return convertView;
+                @Override
+                public int getItemCount() {
+                    return reviewsAuthorAndContent.size();
                 }
             });
         }
@@ -214,9 +229,13 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                 .load(Constant.MOVIE_DB_IMAGE_PATH + posterPath)
                 .placeholder(R.mipmap.ic_launcher)
                 .into(poster);
+        startFavoriteImg.setImageResource(android.R.drawable.btn_star_big_off);
         this.rating.setRating((float)rating);
         this.plotSynopsis.setText(plotSynopsys);
 
+
+        // TODO: 10/29/16 should run on background thread
+        //region should on background thead
         final Long movId = Long.parseLong(movieId);
         final String selection = MovieContract.MovieFavoriteEntry.COLUMN_NAME_ID + " = ?";
         final String [] selectionArg = new String[]{movieId};
@@ -259,24 +278,35 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
                         null);
             }
         });
+        //endregion
     }
 
     private void processTrailer(Cursor cursor){
         final String videoCode = cursor.getString(cursor.getColumnIndex(MovieContract.MovieTrailerEntry.COLUMN_NAME_TRAILER_KEY));
-        if (videoCode != null && !moviesKey.contains(videoCode))
-            moviesKey.add(videoCode);
+        boolean isFind = false;
+        if (videoCode != null && TextUtils.isEmpty(videoCode)){
+            for (String s : moviesKey){
+                if (s.equalsIgnoreCase(videoCode)) {
+                    isFind = true;
+                    break;
+                }
+            }
+            if (!isFind) moviesKey.add(videoCode);
+        }
     }
 
     private void processReview(Cursor cursor){
         final String reviewAuthor = cursor.getString(cursor.getColumnIndex(MovieContract.MovieReviewEntry.COLUMN_NAME_AUTHOR));
         final String reviewContent = cursor.getString(cursor.getColumnIndex(MovieContract.MovieReviewEntry.COLUMN_NAME_CONTENT));
         if (reviewAuthor != null && reviewContent != null){
-            boolean isExist = false;
+            boolean isFind = false;
             for (Pair<String, String> data : reviewsAuthorAndContent){
-                if (data.first.equalsIgnoreCase(reviewAuthor) && data.second.equalsIgnoreCase(reviewContent))
-                    isExist = true;
+                if (data.first.equalsIgnoreCase(reviewAuthor) && data.second.equalsIgnoreCase(reviewContent)) {
+                    isFind = true;
+                    break;
+                }
             }
-            if (!isExist)
+            if (!isFind)
                 reviewsAuthorAndContent.add(new Pair<String, String>(reviewAuthor, reviewContent));
         }
     }

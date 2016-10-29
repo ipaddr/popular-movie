@@ -68,13 +68,13 @@
             android:gravity="left"
             tools:text="@string/plot_synopsis" />
 
-        <ListView
+        <android.support.v7.widget.RecyclerView
             android:id="@+id/movies"
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:nestedScrollingEnabled="true"/>
 
-        <ListView
+        <android.support.v7.widget.RecyclerView
             android:id="@+id/reviews"
             android:layout_width="match_parent"
             android:layout_height="200dp"
