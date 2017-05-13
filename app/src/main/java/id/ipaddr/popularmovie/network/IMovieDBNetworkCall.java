@@ -14,7 +14,7 @@ import retrofit2.http.Path;
 
 public interface IMovieDBNetworkCall {
 
-    final String TMDB_API_KEY = "257daff2ea5e8a52ce59c391d4c07251";
+    final String TMDB_API_KEY = "api-key";
 
     @GET("popular?api_key="+TMDB_API_KEY)
     Call<Movies> getPopularMovies();
