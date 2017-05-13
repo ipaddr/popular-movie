@@ -284,7 +284,7 @@ public class MovieDetailFragment extends Fragment implements LoaderManager.Loade
     private void processTrailer(Cursor cursor){
         final String videoCode = cursor.getString(cursor.getColumnIndex(MovieContract.MovieTrailerEntry.COLUMN_NAME_TRAILER_KEY));
         boolean isFind = false;
-        if (videoCode != null && TextUtils.isEmpty(videoCode)){
+        if (videoCode != null && !TextUtils.isEmpty(videoCode)){
             for (String s : moviesKey){
                 if (s.equalsIgnoreCase(videoCode)) {
                     isFind = true;

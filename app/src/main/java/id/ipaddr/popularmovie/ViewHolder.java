@@ -14,7 +14,7 @@ public class ViewHolder {
         TextView tv;
         public ViewHolderTrailer(View view){
             super(view);
-            tv = (TextView)view.findViewById(R.id.trailer);
+            tv = (TextView)view.findViewById(android.R.id.text1);
         }
     }
 
