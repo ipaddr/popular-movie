@@ -1,5 +1,4 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.neenbedankt.android-apt'
 
 android {
     compileSdkVersion 27
@@ -31,19 +30,19 @@ dependencies {
     implementation 'com.android.support:design:27.1.1'
 
     // retrofit and gson library
-    implementation 'com.google.code.gson:gson:2.8.25'
+    implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
 
     // @generated annotation
-    provided 'org.glassfish:javax.annotation:10.0-b28'
+    compileOnly 'org.glassfish:javax.annotation:10.0-b28'
 
     // image management on android device
     implementation 'com.squareup.picasso:picasso:2.5.2'
 
     // butterknife
     implementation 'com.jakewharton:butterknife:8.8.1'
-    apt 'com.jakewharton:butterknife-compiler:8.8.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 
     testImplementation 'junit:junit:4.12'
 }
